@@ -119,14 +119,14 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None, nwalkers=10,
     # Fit with scipy first  #
     # # # # # # # # # # # # #
 
-    chisq_init = chisq_func(initial_guess, model_func, test_x, test_y, y_err)
+    chisq_init = chisq_func(initial_guess, model_func, x_data, y_data, err_data)
     if loud > 0:
         print("Initial guess: {} -> chisq = {:.2f}".format(initial_guess, chisq_init))
 
     if loud > 2:
-        plot_data_model(model_func, test_x, test_y, y_err, 'Pre-fit', func_args=initial_guess)
+        plot_data_model(model_func, x_data, y_data, err_data, 'Pre-fit', func_args=initial_guess)
 
-    data = (test_x, test_y, y_err)
+    data = (x_data, y_data, err_data)
 
     fit = scipy_opt(model_func, initial_guess, data)
     p_0 = fit['x']
@@ -134,7 +134,7 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None, nwalkers=10,
         print("Initial pass with scipy:\n", fit)
 
     if loud > 0:
-        plot_data_model(model_func, test_x, test_y, y_err, 'Post-fit', func_args=p_0)
+        plot_data_model(model_func, x_data, y_data, err_data, 'Post-fit', func_args=p_0)
 
     if not fit['success']:
         print("Scipy's optimise failed to pass! Proceeding may or may not be dangerous...")
