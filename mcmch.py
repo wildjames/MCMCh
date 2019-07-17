@@ -26,6 +26,9 @@ def chisq_func(model_args, model_function, x_data, y_data, yerr=None, ln_like=Fa
 
     chisq = np.sum( ((y_data - model_data) / yerr)**2 )
 
+    # emcee wants to maximise the diagnostic it's given. 
+    #   maximizing the negative chisq -> minimizing the normal chisq.
+    # This assumes that the noise on the data is gaussian. Otherwise, technically invalid.
     if ln_like:
         return -0.5*chisq
 
@@ -51,6 +54,7 @@ def plot_data_model(func, x, y, ye=None, title='', func_args=(), func_kwargs={})
     plt.show()
 
 def thumbPlot(chain, labels, **kwargs):
+    '''Make a corner plot of the chain'''
     seaborn.set(style='ticks')
     seaborn.set_style({"xtick.direction": "in","ytick.direction": "in"})
     fig = triangle.corner(chain, labels=labels, bins=50,
