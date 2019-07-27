@@ -1,8 +1,9 @@
-import scipy.optimize as opt
 import emcee
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.optimize as opt
 import seaborn
+
 try:
     import triangle
     # This triangle should have a method corner
@@ -26,7 +27,7 @@ def chisq_func(model_args, model_function, x_data, y_data, yerr=None, ln_like=Fa
 
     chisq = np.sum( ((y_data - model_data) / yerr)**2 )
 
-    # emcee wants to maximise the diagnostic it's given. 
+    # emcee wants to maximise the diagnostic it's given.
     #   maximizing the negative chisq -> minimizing the normal chisq.
     # This assumes that the noise on the data is gaussian. Otherwise, technically invalid.
     if ln_like:
@@ -46,7 +47,7 @@ def scipy_opt(model_func, initial_guess, data, *args, **kwargs):
 def plot_data_model(func, x, y, ye=None, title='', func_args=(), func_kwargs={}):
     func_args = tuple(func_args)
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.set_title(title)
     ax.errorbar(x, y, ye, linestyle='', marker='x')
     ax.plot(x, func(x, *func_args, **func_kwargs), color='red', zorder=0)
@@ -62,7 +63,8 @@ def thumbPlot(chain, labels, **kwargs):
     return fig
 
 
-def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None, nwalkers=10, nsteps=5000, scat_factor=5.0, loud=3):
+def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None,
+          nwalkers=10, nsteps=5000, scat_factor=5.0, loud=3):
     '''This is a marriage between scipy optimise and emcee. Suitable only for
     simple functions, designed to be naiive to the model it's fitting.
 
@@ -191,6 +193,10 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None, nwalkers=10,
 
 
 if __name__ == "__main__":
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # # # DEMO  # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     np.random.seed(4321)
 
     def model_func(x, m, c):
