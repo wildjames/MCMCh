@@ -47,7 +47,7 @@ def scipy_opt(model_func, initial_guess, data, *args, **kwargs):
 def plot_data_model(func, x, y, ye=None, title='', func_args=(), func_kwargs={}):
     func_args = tuple(func_args)
 
-    _, ax = plt.subplots()
+    _, ax = plt.subplots(figsize=(12,8))
     ax.set_title(title)
     ax.errorbar(x, y, ye, linestyle='', marker='x')
     ax.plot(x, func(x, *func_args, **func_kwargs), color='red', zorder=0)
@@ -64,7 +64,8 @@ def thumbPlot(chain, labels, **kwargs):
 
 
 def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None,
-          nwalkers=10, nsteps=5000, scat_factor=5.0, loud=3):
+          nwalkers=10, nsteps=5000, nburn=2500, scat_factor=5.0, solver='BFGS',
+          loud=3, manual=True):
     '''This is a marriage between scipy optimise and emcee. Suitable only for
     simple functions, designed to be naiive to the model it's fitting.
 
@@ -134,7 +135,11 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None,
 
     data = (x_data, y_data, err_data)
 
-    fit = scipy_opt(model_func, initial_guess, data)
+    print("Using the {} solver".format(solver))
+    fit = scipy_opt(
+        model_func, initial_guess, data,
+        method='BFGS'
+    )
     p_0 = fit['x']
     if loud > 2:
         print("Initial pass with scipy:\n", fit)
@@ -142,11 +147,13 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None,
     if loud > 0:
         plot_data_model(model_func, x_data, y_data, err_data, 'Post-fit', func_args=p_0)
 
-    if not fit['success']:
+    if not fit['success'] and manual:
         print("Scipy's optimise failed to pass! Proceeding may or may not be dangerous...")
         cont = input("Shall I continue, and try fitting with MCMC anyway? y/n: ")
         if not cont.lower().startswith('y'):
             exit()
+    elif manual:
+        input("Hit enter to continue...")
 
     # # # # # # # # # # # # # # # # # # #
     # Sample the solution with an MCMC  #
@@ -172,7 +179,7 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None,
     sampler = emcee.EnsembleSampler(nwalkers, ndim, chisq_func, args=chisq_args, kwargs={'ln_like': True})
     for i, _ in enumerate(sampler.sample(p_0, iterations=nsteps, storechain=True)):
         if loud > 0:
-            if not i%10:
+            if not i%100:
                 print("\r  Step {}".format(i), end='')
     if loud > 0:
         print()
@@ -186,8 +193,18 @@ def MCMCh(model_func, initial_guess, x_data, y_data, err_data=None,
         print("Done!\n\n")
 
     if loud > 0:
-        thumbPlot(sampler.flatchain, ['m', 'c'])
+        thumbPlot(sampler.flatchain[nburn:], ['m', 'c'])
         plt.show()
+
+    with open("chain.txt", 'w') as f:
+        for step in sampler.chain:
+            f.write(str(step)+'\n')
+
+    print("Final solution:")
+    plot_data_model(
+        model_func, x_data, y_data, ye=err_data,
+        title='Post-MCMC solution', func_args=mean
+    )
 
     return mean, mean-lo, hi-mean
 
